@@ -1,0 +1,4 @@
+.mypy_cache
+.vscode
+scripts/__pycache__
+notebooks/.ipynb_checkpoints
