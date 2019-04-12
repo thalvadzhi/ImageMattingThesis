@@ -10,7 +10,6 @@ def select_crop_coordinates(trimap, crop_size=(IMG_WIDTH, IMG_HEIGHT)):
     crop_w, crop_h = crop_size
     # get indices of all unknown pixels
     x_indices, y_indices = np.where(trimap == TRIMAP_UNKNOWN_VALUE)
-    print
     x, y = 0, 0
     n_unknown = len(y_indices)
     
@@ -26,8 +25,14 @@ def select_crop_coordinates(trimap, crop_size=(IMG_WIDTH, IMG_HEIGHT)):
 
 def crop_by_coordinates(img, x, y, crop_size=(IMG_WIDTH, IMG_HEIGHT)):
     crop_w, crop_h = crop_size
-    im_h, im_w, _ = img.shape
-    padded_crop = np.zeros((crop_h, crop_w, 3), np.uint8)
+    
+    if len(img.shape) == 2:
+        im_h, im_w = img.shape
+        padded_crop = np.zeros((crop_h, crop_w), np.uint8)
+
+    else:
+        im_h, im_w, _ = img.shape
+        padded_crop = np.zeros((crop_h, crop_w, 3), np.uint8)
     
     # first check if the x coordinate is in the first or the second half of the width
     # first calculate the size of the crop to the nearest side of the image
@@ -60,21 +65,15 @@ def crop_by_coordinates(img, x, y, crop_size=(IMG_WIDTH, IMG_HEIGHT)):
     crop = img[y_low:y_high, x_low:x_high]
     h, w = crop.shape[:2]
     h_offset, w_offset = 0, 0
-    # if crop size is bigger in some dimension than the image
-    # black bars will appear. Choose a random offset so the black bars are different in size every time
-    if crop_h > h:
-        h_offset = np.random.choice(range(crop_h - h))
-    if crop_w > w:
-        w_offset = np.random.choice(range(crop_w - w))
+    
     padded_crop[h_offset:h+h_offset, w_offset:w+w_offset] = crop
     return padded_crop
 
 def resize(img, size=(IMG_WIDTH, IMG_HEIGHT)):
     return cv.resize(img, dsize=(IMG_HEIGHT, IMG_WIDTH), interpolation=cv.INTER_NEAREST)
 
-def crop_trimap_centered(img, trimap, crop_size=(IMG_WIDTH, IMG_HEIGHT)):
-    x, y = select_crop_coordinates(trimap, crop_size)
-    cropped = crop_by_coordinates(img, x, y, crop_size)
+def crop_and_resize(img, x, y, crop_size=(IMG_WIDTH, IMG_HEIGHT)):
+    img_cropped = crop_by_coordinates(img, x, y, crop_size)
     if crop_size != (IMG_WIDTH, IMG_HEIGHT):
-        cropped = resize(cropped, size=(IMG_WIDTH, IMG_HEIGHT))
-    return cropped
+        img_cropped = resize(img_cropped, size=(IMG_WIDTH, IMG_HEIGHT))
+    return img_cropped
