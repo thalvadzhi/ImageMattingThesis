@@ -6,7 +6,9 @@ def alpha_loss_wrapper(input_tensor):
     def alpha_loss(y_true, y_pred):
         trimap = input_tensor[:, :, :, 3]
         # trimap has 3 values : 0 for bg, 255 for fg, and 128 for uncertain areas. Mask will be 1 for uncertain areas and 0 for all others
-        mask = K.cast(K.equal(trimap, TRIMAP_UNKNOWN_VALUE), "float16")
+        mask = K.cast(K.equal(trimap, TRIMAP_UNKNOWN_VALUE), "float32")
+        shape_y_pred = K.int_shape(y_pred)
+        mask = K.reshape(mask, (-1, int(shape_y_pred[1]), int(shape_y_pred[2]), 1))
         diff = y_pred - y_true
         # we're only interested in the uncertain areas. It is clear what to do in all others
         diff *= mask
@@ -19,7 +21,9 @@ def compositional_loss_wrapper(input_tensor):
     def compositional_loss(y_true, y_pred):
         trimap = input_tensor[:, :, :, 3]
         original_image = input_tensor[:, :, :, 0:3]
-        mask = K.cast(K.equal(trimap, TRIMAP_UNKNOWN_VALUE), "float16")
+        mask = K.cast(K.equal(trimap, TRIMAP_UNKNOWN_VALUE), "float32")
+        shape_y_pred = K.int_shape(y_pred)
+        mask = K.reshape(mask, (-1, int(shape_y_pred[1]), int(shape_y_pred[2]), 1))
         fg = original_image * y_true
         bg = original_image * (1 - y_true)
         predicted_image = y_pred * fg + (1 - y_pred) * bg
