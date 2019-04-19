@@ -9,12 +9,13 @@ import numpy as np
 import random
 
 class DataGenerator(Sequence):
-    IMG_EXTENSION = "jpg"
-    
+    IMG_EXTENSION_JPG = "jpg"
+    IMG_EXTENSION_PNG = "png"
+
     def __init__(self, path_combined_imgs, path_alphas, batch_size, shuffle=True):
         self.combined_imgs_names = [img_name for img_name
                                     in os.listdir(path_combined_imgs)
-                                    if img_name.endswith(self.IMG_EXTENSION)]
+                                    if img_name.endswith(self.IMG_EXTENSION_JPG) or img_name.endswith(self.IMG_EXTENSION_PNG)]
         
         self.n_images = len(self.combined_imgs_names)
         self.batch_size = batch_size
@@ -55,7 +56,8 @@ class DataGenerator(Sequence):
         crop_sizes = [(320, 320), (480, 480), (640, 640)]
         for name_index, name in enumerate(batch_names):
             name_split = name.split("_")[:-1]
-            name_alpha = "_".join(name_split) + ".{}".format(self.IMG_EXTENSION)
+            extension = name_split[-1].split(".")[-1]
+            name_alpha = "_".join(name_split) + ".{}".format(extension)
             
             composite = np.array(Image.open(self.path_combined_imgs + name))
             alpha = np.array(Image.open(self.path_alphas + name_alpha))
