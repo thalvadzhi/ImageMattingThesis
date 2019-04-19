@@ -56,7 +56,7 @@ class DataGenerator(Sequence):
         crop_sizes = [(320, 320), (480, 480), (640, 640)]
         for name_index, name in enumerate(batch_names):
             name_split = name.split("_")[:-1]
-            extension = name_split[-1].split(".")[-1]
+            extension = name.split(".")[-1]
             name_alpha = "_".join(name_split) + ".{}".format(extension)
             
             composite = np.array(Image.open(self.path_combined_imgs + name))
