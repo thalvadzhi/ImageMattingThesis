@@ -56,11 +56,16 @@ class DataGenerator(Sequence):
         crop_sizes = [(320, 320), (480, 480), (640, 640)]
         for name_index, name in enumerate(batch_names):
             name_split = name.split("_")[:-1]
-            extension = name.split(".")[-1]
-            name_alpha = "_".join(name_split) + ".{}".format(extension)
+            name_alpha = "_".join(name_split) + ".{}".format(self.IMG_EXTENSION_JPG)
             
             composite = np.array(Image.open(self.path_combined_imgs + name))
-            alpha = np.array(Image.open(self.path_alphas + name_alpha))
+            try:
+                alpha = np.array(Image.open(self.path_alphas + name_alpha))
+            except FileNotFoundError:
+                name_alpha = "_".join(name_split) + ".{}".format(self.IMG_EXTENSION_PNG)
+                alpha = np.array(Image.open(self.path_alphas + name_alpha))[:, :, 0]
+                
+
             crop_size = random.choice(crop_sizes)
             # crop_size = (320, 320)
             trimap = generate_trimap(alpha)
