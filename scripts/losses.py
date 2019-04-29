@@ -24,8 +24,8 @@ def compositional_loss_wrapper(input_tensor):
         mask = K.cast(K.equal(trimap, TRIMAP_UNKNOWN_VALUE), "float32")
         shape_y_pred = K.int_shape(y_pred)
         mask = K.reshape(mask, (-1, int(shape_y_pred[1]), int(shape_y_pred[2]), 1))
-        fg = original_image * y_true
-        bg = original_image * (1 - y_true)
+        fg = y_true[:, :, :, 1:4]
+        bg = y_true[:, :, :, 4:7]
         predicted_image = y_pred * fg + (1 - y_pred) * bg
         diff = predicted_image - original_image
         diff *= mask
@@ -39,6 +39,28 @@ def overall_loss_wrapper(input_tensor):
         alpha_loss = alpha_loss_wrapper(input_tensor)
         compositional_loss = compositional_loss_wrapper(input_tensor)
         w_l = 0.5
-        return w_l * alpha_loss(y_true, y_pred) + \
+        return w_l * alpha_loss(y_true[:, :, :, 0], y_pred) + \
             (1 - w_l) * compositional_loss(y_true, y_pred)
     return overall_loss
+
+
+def mse_wrapper(input_tensor):
+    def mse(y_true, y_pred):
+        trimap = input_tensor[:, :, :, 3]
+        diff = y_true - y_pred
+        mask = K.cast(K.equal(trimap, TRIMAP_UNKNOWN_VALUE), "float32")
+        diff *= mask
+        n_pixels = K.sum(mask)
+        return K.sum(K.square(diff) + EPS_SQ) / (n_pixels + EPS)
+    return mse
+
+def sad_wrapper(input_tensor):
+    def sad(y_true, y_pred):
+        trimap = input_tensor[:, :, :, 3]
+        diff = K.abs(y_true - y_pred)
+        mask = K.cast(K.equal(trimap, TRIMAP_UNKNOWN_VALUE), "float32")
+        diff *= mask
+        loss = K.sum(diff)
+        # loss is scaled by 1000 due to large n of images
+        return loss / 1000
+    return sad
