@@ -7,28 +7,52 @@ import re
 from PIL import Image
 import numpy as np
 import random
+import math
 
 class DataGenerator(Sequence):
     IMG_EXTENSION_JPG = "jpg"
     IMG_EXTENSION_PNG = "png"
 
-    def __init__(self, path_combined_imgs, path_alphas, batch_size, shuffle=True):
-        self.combined_imgs_names = [img_name for img_name
-                                    in os.listdir(path_combined_imgs)
-                                    if img_name.endswith(self.IMG_EXTENSION_JPG) or img_name.endswith(self.IMG_EXTENSION_PNG)]
-        
-        self.n_images = len(self.combined_imgs_names)
+
+    def __init__(self, path_fg, path_bg, bgs_per_fg, base_path_fg, base_path_bg, base_path_alphas, batch_size, shuffle=True):
+        self.path_fg = path_fg
+        self.path_bg = path_bg
+        self.base_path_fg = base_path_fg
+        self.base_path_bg = base_path_bg
+        self.base_path_alpha = base_path_alphas
+       
+        self.bgs_per_fg = bgs_per_fg # n backgrounds for one foreground
+        self.fg, self.bg = self.__read_all_names()
+        self.couples = self.__make_all_couples()
+        self.n_images = len(self.couples)
         self.batch_size = batch_size
-        self.path_combined_imgs = path_combined_imgs
-        self.path_alphas = path_alphas
         self.shuffle = shuffle
 
-        if self.shuffle==True:
-            np.random.shuffle(self.combined_imgs_names)
+        self.on_epoch_end()
 
 
     def __len__(self):
         return self.n_images // self.batch_size
+
+    def __read_all_names(self):
+
+        with open(self.path_fg) as f:
+            fg = f.read().splitlines()
+        
+        with open(self.path_bg) as f:
+            bg = f.read().splitlines()
+        
+        return fg, bg
+
+    def __make_all_couples(self):
+        couples = []
+        global_counter = 0
+        for fg in self.fg:
+            for _ in range(self.bgs_per_fg):
+                couples.append((fg, self.bg[global_counter]))
+                global_counter += 1
+        return couples
+        
 
     def __crop_img_alpha_trimap(self, img, alpha, trimap, crop_size):
         x, y = select_crop_coordinates(trimap, crop_size)
@@ -37,52 +61,93 @@ class DataGenerator(Sequence):
         trimap_crop = crop_and_resize(trimap, x, y, crop_size)
         return img_crop, alpha_crop, trimap_crop
 
-    def __randomly_flip_images(self, img, alpha, trimap):
+    def __crop_multiple_args(self, trimap, crop_size, *args):
+        x, y = select_crop_coordinates(trimap, crop_size)
+        print(x, y)
+        trimap_crop = crop_and_resize(trimap, x, y, crop_size)
+        crops = []
+        for arg in args:
+            crops.append(crop_and_resize(arg, x, y, crop_size))
+        return (trimap_crop, *crops)
+
+    def __randomly_flip_images(self,*args):
+        
         if np.random.random_sample() > 0.5:
-            img = np.fliplr(img)
-            alpha = np.fliplr(alpha)
-            trimap = np.fliplr(trimap)
-        return img, alpha, trimap
+            flips = []
+            for arg in args:
+                flips.append(np.fliplr(arg))
+            return flips
+        return args
+
+    
+
+    def __process(self, fg_name, bg_name):
+        im = Image.open(self.base_path_fg + fg_name)
+        a = Image.open(self.base_path_alpha + fg_name)
+        w, h = im.size
+        bg = Image.open(self.base_path_bg + bg_name)
+        bw, bh = bg.size
+        wratio = w / bw
+        hratio = h / bh
+        if im.mode != 'RGB' and im.mode != 'RGBA':
+            im = im.convert('RGB')
+
+        if bg.mode != 'RGB':
+            bg = bg.convert('RGB')
+        
+        ratio = wratio if wratio > hratio else hratio
+        if ratio > 1:
+            bg = bg.resize((math.ceil(bw*ratio),math.ceil(bh*ratio)), Image.BICUBIC)
+
+
+        return self.__composite5(im, bg, a, w, h)
+
+    def __composite5(self, fg, bg, a, w, h):
+        bg = bg.crop((0,0,w,h))
+        
+        fg_list = np.array(fg)
+        bg_list = np.array(bg)
+        alphas = np.array(a) / 255
+        alphas_w, alphas_h = alphas.shape
+        alphas = alphas.reshape(alphas_w, alphas_h, 1)
+        one_minus_alpha = 1 - alphas
+        im = (alphas * fg_list + one_minus_alpha * bg_list).astype(np.uint8)
+    
+        return im, fg_list, bg_list, (alphas * 255).astype(np.uint8)
 
     def __getitem__(self, idx):
         #idx is the index of the batch
 
         index = idx * self.batch_size
 
-        batch_names = self.combined_imgs_names[index:index+self.batch_size]
+        batch_names = self.couples[index:index+self.batch_size]
         batch_x = np.empty((self.batch_size, IMG_HEIGHT, IMG_WIDTH, 4), dtype=np.float32)
-        batch_y = np.empty((self.batch_size, IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.float32)
+        batch_y = np.empty((self.batch_size, IMG_HEIGHT, IMG_WIDTH, 7), dtype=np.float32)
 
         crop_sizes = [(320, 320), (480, 480), (640, 640)]
-        for name_index, name in enumerate(batch_names):
-            name_split = name.split("_")[:-1]
-            name_alpha = "_".join(name_split) + ".{}".format(self.IMG_EXTENSION_JPG)
-            
-            composite = np.array(Image.open(self.path_combined_imgs + name))
-            try:
-                alpha = np.array(Image.open(self.path_alphas + name_alpha))
-            except FileNotFoundError:
-                name_alpha = "_".join(name_split) + ".{}".format(self.IMG_EXTENSION_PNG)
-                alpha = np.array(Image.open(self.path_alphas + name_alpha))[:, :, 0]
-                
-
+        for name_index, (fg_name, bg_name) in enumerate(batch_names):
+           
+            composite, fg, bg, alpha = self.__process(fg_name, bg_name)
             crop_size = random.choice(crop_sizes)
-            # crop_size = (320, 320)
             trimap = generate_trimap(alpha)
 
-            img_crop, alpha_crop, trimap_crop = self.__crop_img_alpha_trimap(composite, alpha, trimap, crop_size)
+            trimap_crop, comp_crop, alpha_crop, fg_crop, bg_crop = self.__crop_multiple_args(trimap, crop_size, composite, alpha, fg, bg)
             
-            img_crop, alpha_crop, trimap_crop = self.__randomly_flip_images(img_crop, alpha_crop, trimap_crop)
+            trimap_crop, comp_crop, alpha_crop, fg_crop, bg_crop = self.__randomly_flip_images(trimap_crop, comp_crop, alpha_crop, fg_crop, bg_crop)
+
+
             
-            batch_x[name_index, :, :, 0:3] = img_crop / 255
+            batch_x[name_index, :, :, 0:3] = comp_crop / 255
             batch_x[name_index, :, :, 3] = trimap_crop / 255
-            batch_y[name_index, :, :, 0] = alpha_crop / 255
+            batch_y[name_index, :, :, 0] = alpha_crop[:, :, 0] / 255
+            batch_y[name_index, :, :, 1:4] = fg_crop / 255
+            batch_y[name_index, :, :, 4:7] = bg_crop / 255
 
         return batch_x, batch_y
 
     def on_epoch_end(self):
         if self.shuffle is True:
-            np.random.shuffle(self.combined_imgs_names)
+            np.random.shuffle(self.couples)
 
 
 
