@@ -8,8 +8,8 @@ def select_crop_coordinates(trimap, crop_size=(IMG_WIDTH, IMG_HEIGHT)):
         The rectangle will be centered around a random value
     '''
     crop_w, crop_h = crop_size
-    # get indices of all unknown pixels
-    x_indices, y_indices = np.where(trimap == TRIMAP_UNKNOWN_VALUE)
+    # get indices of `all unknown pixels
+    x_indices, y_indices = np.where(trimap / 255 == TRIMAP_UNKNOWN_VALUE)
     x, y = 0, 0
     n_unknown = len(y_indices)
     
