@@ -51,7 +51,7 @@ base_test  = base + "test_ds/"
 
 fg_train = base_train + "all_foregrounds/"
 bg_train = base_train + "train_selected/"
-a_train = base_train + "all_alphas"
+a_train = base_train + "all_alphas/"
 
 fg_names_train = base_train + "training_fg_names.txt"
 bg_names_train = base_train + "training_bg_names.txt"
