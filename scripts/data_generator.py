@@ -63,7 +63,6 @@ class DataGenerator(Sequence):
 
     def __crop_multiple_args(self, trimap, crop_size, *args):
         x, y = select_crop_coordinates(trimap, crop_size)
-        print(x, y)
         trimap_crop = crop_and_resize(trimap, x, y, crop_size)
         crops = []
         for arg in args:
@@ -89,9 +88,10 @@ class DataGenerator(Sequence):
         bw, bh = bg.size
         wratio = w / bw
         hratio = h / bh
+
         if im.mode != 'RGB' and im.mode != 'RGBA':
             im = im.convert('RGB')
-
+            
         if bg.mode != 'RGB':
             bg = bg.convert('RGB')
         
@@ -99,7 +99,7 @@ class DataGenerator(Sequence):
         if ratio > 1:
             bg = bg.resize((math.ceil(bw*ratio),math.ceil(bh*ratio)), Image.BICUBIC)
 
-
+        # print("Alpha size={}, name={}, bg_name={}".format(a.size, fg_name, bg_name))
         return self.__composite5(im, bg, a, w, h)
 
     def __composite5(self, fg, bg, a, w, h):
@@ -108,6 +108,12 @@ class DataGenerator(Sequence):
         fg_list = np.array(fg)
         bg_list = np.array(bg)
         alphas = np.array(a) / 255
+        if len(alphas.shape) > 2:
+            alphas = alphas[:, :, 0]
+        
+        if len(fg_list.shape) > 2:
+            fg_list = fg_list[:, :, 0:3]
+
         alphas_w, alphas_h = alphas.shape
         alphas = alphas.reshape(alphas_w, alphas_h, 1)
         one_minus_alpha = 1 - alphas
