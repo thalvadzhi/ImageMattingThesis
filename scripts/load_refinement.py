@@ -14,13 +14,13 @@ def build_refinement(encoder_decoder_model):
     x = Concatenate(axis=3, name="concatenate_refinement")([input_no_trimap, encoder_decoder_model.output])
     x = Conv2D(64, (3, 3), activation='relu', padding='same', kernel_initializer='he_normal',
                bias_initializer='zeros',name="conv_refinement1")(x)
-    x = BatchNormalization()(x)
+    x = BatchNormalization(name="batch_norm_refinement_1")(x)
     x = Conv2D(64, (3, 3), activation='relu', padding='same', kernel_initializer='he_normal',
                bias_initializer='zeros',name="conv_refinement2")(x)
-    x = BatchNormalization()(x)
+    x = BatchNormalization(name="batch_norm_refinement_2")(x)
     x = Conv2D(64, (3, 3), activation='relu', padding='same', kernel_initializer='he_normal',
                bias_initializer='zeros',name="conv_refinement3")(x)
-    x = BatchNormalization()(x)
+    x = BatchNormalization(name="batch_norm_refinement_3")(x)
     x = Conv2D(1, (3, 3), activation='sigmoid', padding='same', name='refinement_output', kernel_initializer='he_normal',
                bias_initializer='zeros')(x)
 
