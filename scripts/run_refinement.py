@@ -30,6 +30,10 @@ BACKGROUNDS_PER_FG_TRAIN = 100
 BACKGROUNDS_PER_FG_TEST = 20
 BATCH_SIZE=16
 
+base = "/home/devthebear/ds_uncombined/"
+base_train = base + "train_ds/"
+base_test  = base + "test_ds/"
+
 fg_train = base_train + "all_foregrounds/"
 bg_train = base_train + "train_selected/"
 a_train = base_train + "all_alphas/"
@@ -66,7 +70,7 @@ multi_gpu_model = multi_gpu_model(refinement, gpus=2)
 
 inputs = refinement.input
 optimizer = Adam(lr=0.00001)
-refinement.compile(optimizer=optimizer, loss=alpha_loss_wrapper(inputs), metrics=[sad_wrapper(inputs), mse_wrapper(inputs)])
+multi_gpu_model.compile(optimizer=optimizer, loss=alpha_loss_wrapper(inputs), metrics=[sad_wrapper(inputs), mse_wrapper(inputs)])
 
 
 # In[215]:
