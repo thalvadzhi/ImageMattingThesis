@@ -4,8 +4,6 @@ from CONSTANTS import EPS, EPS_SQ, TRIMAP_UNKNOWN_VALUE
 
 def alpha_loss_wrapper(input_tensor):
     def alpha_loss(y_true, y_pred):
-        # print(K.int_shape(y_true), K.int_shape(y_pred))
-
         trimap = input_tensor[:, :, :, 3]
         # trimap has 3 values : 0 for bg, 255 for fg, and 128 for uncertain areas. Mask will be 1 for uncertain areas and 0 for all others
         mask = K.cast(K.equal(trimap, TRIMAP_UNKNOWN_VALUE), "float32")
