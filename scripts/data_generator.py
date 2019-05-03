@@ -27,7 +27,6 @@ class DataGenerator(Sequence):
         self.n_images = len(self.couples)
         self.batch_size = batch_size
         self.shuffle = shuffle
-
         self.on_epoch_end()
 
 
@@ -125,7 +124,6 @@ class DataGenerator(Sequence):
         #idx is the index of the batch
 
         index = idx * self.batch_size
-
         batch_names = self.couples[index:index+self.batch_size]
         batch_x = np.empty((self.batch_size, IMG_HEIGHT, IMG_WIDTH, 4), dtype=np.float32)
         batch_y = np.empty((self.batch_size, IMG_HEIGHT, IMG_WIDTH, 7), dtype=np.float32)
