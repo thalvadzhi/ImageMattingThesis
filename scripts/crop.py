@@ -1,4 +1,4 @@
-from CONSTANTS import TRIMAP_UNKNOWN_VALUE, IMG_HEIGHT, IMG_WIDTH
+from scripts.CONSTANTS import TRIMAP_UNKNOWN_VALUE, IMG_HEIGHT, IMG_WIDTH
 import numpy as np
 import cv2 as cv
 
@@ -17,7 +17,7 @@ def select_crop_coordinates(trimap, crop_size=(IMG_WIDTH, IMG_HEIGHT)):
         return x, y
     
     # pick one of the unknown pixels at random
-    idx = np.random.choice(range(n_unknown))
+    idx = np.random.randint(0, n_unknown)
     center_x = x_indices[idx]
     center_y = y_indices[idx]
 
