@@ -34,7 +34,7 @@ class TrainEncoderDecoder:
     def load_model(self):
         inputs, model = build_encoder_decoder_from_vgg()
        
-        train_gen, test_gen = self._get_data_generators(self.batch_size)
+        self.train_gen, self.test_gen = self._get_data_generators(self.batch_size)
 
         self.callbacks = self._get_callbacks(model)
         

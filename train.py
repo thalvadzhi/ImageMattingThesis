@@ -2,6 +2,7 @@ import argparse
 from scripts.alpha_matting.run_encoder_decoder_arch import TrainEncoderDecoder
 from scripts.alpha_matting.run_refinement import TrainRefinement
 from scripts.alpha_matting.run_whole_alpha_matting import TrainWholeAlphaMatting
+from scripts.saliency.run_saliency_model import TrainSaliencyModel
 
 parser = argparse.ArgumentParser(description='Script for training neural networks.')
 
@@ -26,4 +27,8 @@ elif args.target == "alpha_matting_whole":
     trainer = TrainWholeAlphaMatting()
     trainer.load_model()
     trainer.train()
+elif args.target == "saliency":
+    trainer = TrainSaliencyModel()
+    trainer.load_model()
+    trainer.train_debug()
 print(args.target)

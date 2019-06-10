@@ -44,7 +44,7 @@ class TrainRefinement(TrainEncoderDecoder):
        
         refinement = build_refinement(encoder_decoder)
         
-        train_gen, test_gen = self._get_data_generators(self.batch_size)
+        self.train_gen, self.test_gen = self._get_data_generators(self.batch_size)
 
         self.callbacks = self._get_callbacks(refinement)
         

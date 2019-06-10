@@ -42,7 +42,7 @@ class TrainWholeAlphaMatting(TrainEncoderDecoder):
         refinement = load_model(TrainWholeAlphaMatting.PATH_MODEL_CHECKPOINTS + self.model_name, custom_objects={"Unpooling": Unpooling()})
        
         
-        train_gen, test_gen = self._get_data_generators(self.batch_size)
+        self.train_gen, self.test_gen = self._get_data_generators(self.batch_size)
 
         self.callbacks = self._get_callbacks(refinement)
         
