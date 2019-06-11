@@ -11,3 +11,7 @@ def generate_trimap(alpha):
     unknown = cv.dilate(unknown, kernel_dilate, iterations=2)#np.random.randint(5, 20))
     trimap = fg * 255 + (unknown - fg) * 128
     return trimap.astype(np.uint8)
+
+def get_final_output(prediction, trimap):
+    mask = np.equal(trimap, 128/255).astype(np.float32)
+    return (1 - mask) * trimap + mask * prediction

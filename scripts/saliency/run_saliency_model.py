@@ -98,8 +98,7 @@ class TrainSaliencyModel:
                                         callbacks=self.callbacks,
                                         validation_data=self.test_gen,
                                         shuffle=True,
-                                        workers=3,
-                                        use_multiprocessing=True)
+                                        )
 
     def train_debug(self, epochs=1):
         return self.model.fit_generator(self.train_gen,
@@ -110,9 +109,5 @@ class TrainSaliencyModel:
                                         validation_data=self.test_gen,
                                         validation_steps=1,
                                         shuffle=True,
-                                        
-                                        
-                                        
-                                        
                                         )
 

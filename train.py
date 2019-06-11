@@ -30,5 +30,5 @@ elif args.target == "alpha_matting_whole":
 elif args.target == "saliency":
     trainer = TrainSaliencyModel()
     trainer.load_model()
-    trainer.train_debug()
+    trainer.train()
 print(args.target)
