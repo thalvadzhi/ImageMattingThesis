@@ -28,10 +28,7 @@ class AlphaMattePredictor:
     def load_model(self, ):
         self.model = load_model(self.path_to_predictor, custom_objects={"Unpooling": Unpooling()})
     
-    def predict_patches(self, path_to_img, path_to_trimap):
-        img = cv.imread(path_to_img)
-        trimap = cv.imread(path_to_trimap)
-
+    def predict_patches_img(self, img, trimap):
         patches, shape = get_all_patches(img, trimap)
 
         predictions = []
@@ -42,11 +39,13 @@ class AlphaMattePredictor:
         combined_predicton = combine_patches(np.array(predictions).reshape(n, 320, 320, 1), (shape[0], shape[1], 1))
 
         return get_final_output(combined_predicton.reshape(shape[0], shape[1]), trimap[:, :, 0] / 255)
-
-    def predict_resized(path_to_img, path_to_trimap):
+    
+    def predict_patches_path(self, path_to_img, path_to_trimap):
         img = cv.imread(path_to_img)
         trimap = cv.imread(path_to_trimap)
+        return self.predict_patches_img(img, trimap)
 
+    def predict_resized_img(self, img, trimap):
         original_shape = img.shape
         img_resized = cv.resize(img, (320, 320))
         trimap_resized = cv.resize(trimap, (320, 320))
@@ -58,6 +57,11 @@ class AlphaMattePredictor:
         prediction = self.model.predict(input_for_model)
         
         return cv.resize(prediction[0], (original_shape[1], original_shape[0]))
+
+    def predict_resized_path(self, path_to_img, path_to_trimap):
+        img = cv.imread(path_to_img)
+        trimap = cv.imread(path_to_trimap)
+        return self.predict_resized_img(img, trimap)
 
 
 

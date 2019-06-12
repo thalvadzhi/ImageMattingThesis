@@ -395,7 +395,7 @@ def clusterize_superpixels_hist(dists, classes, hists):
         dists_to_fg = get_distance_one_to_all(point, avg_hists_fg)
 
         if (np.min(dists_to_bg) < np.min(dists_to_fg)
-            ) and np.abs(np.min(dists_to_bg) - np.min(dists_to_fg)) > 0.2:
+            ) and np.abs(np.min(dists_to_bg) - np.min(dists_to_fg)) > 0.99:
             print(np.min(dists_to_bg), np.min(dists_to_fg), fg[index], index)
             new_bg.append(fg[index])
         else:
@@ -409,7 +409,7 @@ def clusterize_superpixels_hist(dists, classes, hists):
         dists_to_fg = get_distance_one_to_all(point, avg_hists_fg)
 
         if (np.min(dists_to_bg) > np.min(dists_to_fg)
-            ) and np.abs(np.min(dists_to_fg) - np.min(dists_to_bg)) > 0.2:
+            ) and np.abs(np.min(dists_to_fg) - np.min(dists_to_bg)) > 0.99:
             print(np.min(dists_to_bg), np.min(dists_to_fg), bg[index], index)
             new_fg.append(bg[index])
 
