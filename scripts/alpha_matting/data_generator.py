@@ -130,9 +130,7 @@ class DataGenerator(Sequence):
 
     def __process_2(self, comb_name):
         fg_name, bg_name = self.__get_fg_bg_name_from_comb_name(comb_name)
-        # print(self.base_path_combined + comb_name)
         comb = cv.imread(self.base_path_combined + comb_name)
-        # print(comb)
         fg = cv.imread(self.base_path_fg + fg_name)
         a = cv.imread(self.base_path_alpha + fg_name)
         h, w = fg.shape[:2]
@@ -140,25 +138,14 @@ class DataGenerator(Sequence):
         bh, bw = bg.shape[:2]
         wratio = w / bw
         hratio = h / bh
-
-        # if fg.mode != 'RGB' and fg.mode != 'RGBA':
-        #     fg = fg.convert('RGB')
-
-        # if comb.mode != 'RGB' and comb.mode != 'RGBA':
-        #     comb = comb.convert('RGB')
-            
-        # if bg.mode != 'RGB':
-        #     bg = bg.convert('RGB')
         
         ratio = wratio if wratio > hratio else hratio
         if ratio > 1:
             bg = cv.resize(bg, (math.ceil(bw*ratio),math.ceil(bh*ratio)), interpolation=cv.INTER_CUBIC)
-        # print((math.ceil(bw*ratio),math.ceil(bh*ratio)))
         alpha = a
         foreg = fg
         backg = bg
         combined = comb
-        # print(alpha.shape, foreg.shape, backg.shape, combined.shape)
         if len(alpha.shape) > 2:
             alpha = alpha[:, :, 0]
         
@@ -170,11 +157,9 @@ class DataGenerator(Sequence):
 
         if len(combined.shape) > 2:
             combined = combined[:, : ,0:3]  
-        # print("Alpha size={}, name={}, bg_name={}".format(a.size, fg_name, bg_name))
         return combined, foreg, backg, alpha
 
     def __composite5(self, fg, bg, a, w, h):
-        # bg = bg.crop((0,0,w,h))
         bg = bg[0:h, 0:w]
         
         fg_list = np.array(fg)
@@ -207,16 +192,13 @@ class DataGenerator(Sequence):
            
             composite, fg, bg, alpha = self.__process_2(comb_name)
 
-            # print('before trimap')
-            # print(alpha)
+    
             crop_size = random.choice(crop_sizes)
             trimap = generate_trimap(alpha)
 
             trimap_crop, comp_crop, alpha_crop, fg_crop, bg_crop = self.__crop_multiple_args(trimap, crop_size, composite, alpha, fg, bg)
             
             trimap_crop, comp_crop, alpha_crop, fg_crop, bg_crop = self.__randomly_flip_images(trimap_crop, comp_crop, alpha_crop, fg_crop, bg_crop)
-            # together.append((composite, fg, bg, alpha))
-
             
             batch_x[name_index, :, :, 0:3] = comp_crop / 255
             batch_x[name_index, :, :, 3] = trimap_crop / 255
@@ -271,19 +253,8 @@ class DataGenerator(Sequence):
         bh, bw = bg.shape[:2]
         wratio = w / bw
         hratio = h / bh
-
-        # if im.mode != 'RGB' and im.mode != 'RGBA':
-        #     im = im.convert('RGB')
-            
-        # if bg.mode != 'RGB':
-        #     bg = bg.convert('RGB')
         
         ratio = wratio if wratio > hratio else hratio
         if ratio > 1:
             bg = cv.resize(bg, (math.ceil(bw*ratio),math.ceil(bh*ratio)), interpolation=cv.INTER_CUBIC)
-
-        # print("Alpha size={}, name={}, bg_name={}".format(a.size, fg_name, bg_name))
         return self.__composite5(im, bg, a, w, h)
-
-
-

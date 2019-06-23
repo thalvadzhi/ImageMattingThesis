@@ -11,7 +11,7 @@ def load_train_test_names(path_train_names, path_test_names):
 
     return train_names, test_names
 
-train_names, test_names = load_train_test_names( "C:\\Workspace\\ThesisImageMatting\\data\\saliency\\train_names.txt", "C:\\Workspace\\ThesisImageMatting\\data\\saliency\\test_names.txt")
+train_names, test_names = load_train_test_names( "..\\..\\data\\saliency\\train_names.txt", "..\\..\\data\\saliency\\test_names.txt")
 
 def make_ds_flowable(train_names, test_names, path_images):
    
@@ -28,4 +28,4 @@ def make_ds_flowable(train_names, test_names, path_images):
         copyfile(path_images + "ground_truth\\" + name_gt, path_images + "test_ds\\ground_truth\\" + name_gt)
 
 
-make_ds_flowable(train_names, test_names, "D:\\saliency dataset\\complete\\")
+make_ds_flowable(train_names, test_names, "..\\..\\data\\complete\\")

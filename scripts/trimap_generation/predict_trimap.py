@@ -12,12 +12,14 @@ class TrimapPredictor:
     
     def predict_img(self, img, saliency):
         
-        segments = slic(img, n_segments = self.n_superpixels, compactness=50)
+        segments = slic(img, n_segments = self.n_superpixels, compactness=20)
+       
         medians = get_median_superpixel(saliency, segments)
         sal, classes = classify_superpixels_based_on_median_of_saliency(saliency, segments, medians)
         hists = get_color_hist_for_each_superpixel(img, segments)
         dist = get_bhat_d_for_each_pair_superpixels_fast(hists)
-        new_fg, new_bg = clusterize_superpixels_hist(dist, classes, hists)
+        neighbours = get_neighbouring_segments(segments)
+        new_fg, new_bg = clusterize_superpixels_hist(dist, classes, hists, neighbours)
         saliency_new = color_saliency(new_fg, new_bg, segments, saliency)
         try:
             ret, otsu = cv.threshold((saliency_new * 255).astype(np.uint8)[:, :, 0],0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)

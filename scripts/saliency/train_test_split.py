@@ -2,7 +2,7 @@ from sklearn.model_selection import train_test_split
 import os
 import numpy as np
 
-path_base = "D:\\saliency dataset\\"
+path_base = "..\\..\\data\\"
 path_imgs = path_base + "complete\\images\\"
 path_gt = path_base + "complete\\ground_truth\\"
 

@@ -7,7 +7,7 @@ def generate_generator(gen):
         X, y = next(gen)
         yield X, [y, y, y, y, y, y, y]
 
-def get_data_generators(base="D:\\saliency dataset\\complete\\", batch_size=16, target_size=(448, 320)):
+def get_data_generators(base="..\\..\\data\\saliency dataset\\complete\\", batch_size=16, target_size=(448, 320)):
     seed = 42
 
     train_img = ImageDataGenerator(zoom_range=0.1, horizontal_flip=True, rescale=1.0/255.0)

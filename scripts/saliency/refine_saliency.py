@@ -147,8 +147,7 @@ def clusterize_superpixels(descs, classes):
     t2_fg = mean_distance_to_every_center(descs[fg], cluster_centers_bg)
     t2_bg = mean_distance_to_every_center(descs[bg], cluster_centers_fg)
 
-    #     print(mean_distance_to_every_center(descs[fg], cluster_centers_fg))
-    #     print(mean_distance_to_every_center(descs[bg], cluster_centers_bg))
+
     new_fg = []
     new_bg = []
     print(t2_fg, t2_bg)
@@ -181,10 +180,10 @@ def clusterize_superpixels(descs, classes):
 
 def color_saliency(fg, bg, segments, saliency):
     sal = saliency.copy()
-    # for index, segment_idx in enumerate(fg):
-    #     segment_indices = zip(*np.where(segments == segment_idx))
-    #     classification = 1
-    #     set_value_for_superpixel(sal, segment_indices, classification)
+    for index, segment_idx in enumerate(fg):
+        segment_indices = zip(*np.where(segments == segment_idx))
+        classification = 1
+        set_value_for_superpixel(sal, segment_indices, classification)
 
     for index, segment_idx in enumerate(bg):
         segment_indices = zip(*np.where(segments == segment_idx))
@@ -358,63 +357,81 @@ def get_distance_one_to_all(hist, others):
         dists.append(d)
     return dists
 
+def get_neighbouring_segments(segments):
+    number_of_segments = np.max(segments) + 1
+    neighbours = [set() for _ in range(number_of_segments)]
 
-def clusterize_superpixels_hist(dists, classes, hists):
+    THRESHOLD = 50
+    for (x, y), value in np.ndenumerate(segments):
+        if y < len(segments[x]) - 1:
+            adj_value = segments[x][y + 1]
+            if adj_value != value :
+                neighbours[value].add(adj_value)
+                neighbours[adj_value].add(value)
+
+        if x < len(segments) - 1:
+            adj_value = segments[x + 1][y]
+            if adj_value != value :
+                neighbours[value].add(adj_value)
+                neighbours[adj_value].add(value)
+
+    return neighbours
+
+
+def clusterize_superpixels_hist(dists, classes, hists, neighbours):
     fg, bg = get_indices_of_fg_bg_superpixels(classes)
-
+    
     hist_shape = hists[0].shape
     hists_culture = np.array(list(zip(hists))).reshape(3, hist_shape[0],
                                                        hist_shape[1])
-    dbscan_fg = DBSCAN(eps=0.5, metric="precomputed", min_samples=2)
-    dbscan_bg = DBSCAN(eps=0.2, metric="precomputed", min_samples=2)
+    
+    dbscan_fg = DBSCAN(eps=0.3, metric="precomputed", min_samples=2)
+    dbscan_bg = DBSCAN(eps=0.3, metric="precomputed", min_samples=2)
 
     clusters_fg = dbscan_fg.fit_predict(dists[fg][:, fg])
     clusters_bg = dbscan_bg.fit_predict(dists[bg][:, bg])
 
     avg_hists_fg = get_average_hists_for_all_clusters(fg, clusters_fg, hists)
+    
     avg_hists_bg = get_average_hists_for_all_clusters(bg, clusters_bg, hists)
 
-    #     t2_fg = mean_distance_to_every_center(descs[fg], cluster_centers_bg)
-    #     t2_bg = mean_distance_to_every_center(descs[bg], cluster_centers_fg)
-
-    #     print(mean_distance_to_every_center(descs[fg], cluster_centers_fg))
-    #     print(mean_distance_to_every_center(descs[bg], cluster_centers_bg))
     new_fg = []
     new_bg = []
-    #     print(t2_fg, t2_bg)
-    new_bg += list(fg[np.where(clusters_fg == -1)])
-    fg = np.delete(fg, np.where(clusters_fg == -1))
-    bg = np.delete(bg, np.where(clusters_bg == -1))
+
 
     fg_hists = hists_culture[:, fg]
     bg_hists = hists_culture[:, bg]
-    for index in range(fg_hists.shape[1]):
-        point = fg_hists[:, index]
+    
+    for index in fg:
+        point = hists_culture[:, index]
 
         dists_to_bg = get_distance_one_to_all(point, avg_hists_bg)
         dists_to_fg = get_distance_one_to_all(point, avg_hists_fg)
 
         if (np.min(dists_to_bg) < np.min(dists_to_fg)
-            ) and np.abs(np.min(dists_to_bg) - np.min(dists_to_fg)) > 0.99:
-            print(np.min(dists_to_bg), np.min(dists_to_fg), fg[index], index)
-            new_bg.append(fg[index])
+            ) and np.abs(np.min(dists_to_bg) - np.min(dists_to_fg)) > 0.4:
+            new_bg.append(index)
         else:
-            new_fg.append(fg[index])
+            if neighbours[index].intersection(set(fg)) != set():
 
-    print("BGS")
-    for index in range(bg_hists.shape[1]):
-        point = bg_hists[:, index]
+                new_fg.append(index)
+            else:
+                new_bg.append(index)
+           
 
-        dists_to_bg = get_distance_one_to_all(point, avg_hists_bg)
+
+    for index in bg:
+        point = hists_culture[:, index]
+        
+        dists_to_bg = np.sort(get_distance_one_to_all(point, avg_hists_bg))
         dists_to_fg = get_distance_one_to_all(point, avg_hists_fg)
+        if dists_to_bg[1] > np.min(dists_to_fg) and np.abs(dists_to_bg[1] - np.min(dists_to_fg)) > 0.1:
 
-        if (np.min(dists_to_bg) > np.min(dists_to_fg)
-            ) and np.abs(np.min(dists_to_fg) - np.min(dists_to_bg)) > 0.99:
-            print(np.min(dists_to_bg), np.min(dists_to_fg), bg[index], index)
-            new_fg.append(bg[index])
+            if neighbours[index].intersection(set(new_fg)) != set():
+                print(dists_to_bg[1], np.min(dists_to_fg), index, index)
 
-
-#             print(np.min(dists_to_fg), np.min(dists_to_bg))
+                new_fg.append(index)
         else:
-            new_bg.append(bg[index])
+            new_bg.append(index)
     return new_fg, new_bg
+

@@ -3,10 +3,8 @@ from scripts.trimap_generation.predict_trimap import TrimapPredictor
 from scripts.saliency.predict_saliency import SaliencyPredictor
 import cv2 as cv
 import scipy
-alpha_matte_predictor_path = "../../model_checkpoints/encoder_decoder.07-val_loss-0.1294-val_sad-187.0877-val_mse-0.0446.hdf5"
-# alpha_matte_predictor_path = "../../model_checkpoints/refined.hdf5"
-
-saliency_predictor_path = "../../model_checkpoints/saliency.34-val_loss-0.9297.hdf5"
+alpha_matte_predictor_path = "../../model_checkpoints/alpha_matting.hdf5"
+saliency_predictor_path = "../../model_checkpoints/saliency.hdf5"
 SALIENCY_PATH = "../../output/saliency.png"
 TRIMAP_PATH = "../../output/trimap.png"
 ALPHA_MATTE_PATH = "../../output/alpha.png"
@@ -18,12 +16,16 @@ class Workflow:
         self.trimap = trimap
     
     def set_img(self, img):
-        self.img = cv.imread(img)
+        if isinstance(img, str):
+            self.img = cv.imread(img)
+        else:
+            self.img = img
     
     def set_sal(self, sal):
-        self.sal = cv.imread(sal) / 255
-        print(self.sal.shape)
-    
+        self.sal = cv.imread(sal)
+        if self.sal is not None:
+            self.sal /= 255
+
     def set_trimap(self, trimap):
         self.trimap = cv.imread(trimap)
 
@@ -69,10 +71,10 @@ class Workflow:
         print("Predicting alpha matte...")
         alpha_matte_predictor = AlphaMattePredictor(alpha_matte_predictor_path)
         alpha_matte_predictor.load_model()
-        alpha_matte = alpha_matte_predictor.predict_patches_img(img, trimap)
+        self.alpha_matte = alpha_matte_predictor.predict_patches_intelligent_img(img, trimap)
         print("Done with alpha matte!")
         print("Saving alpha matte.")
-        self.save_img(alpha_matte, ALPHA_MATTE_PATH)
+        self.save_img(self.alpha_matte, ALPHA_MATTE_PATH)
 
     
     def workflow(self, output):

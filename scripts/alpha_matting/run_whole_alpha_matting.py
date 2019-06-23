@@ -29,7 +29,6 @@ class TrainWholeAlphaMatting(TrainEncoderDecoder):
     def _get_callbacks(self, model):
         tensor_board = keras.callbacks.TensorBoard(log_dir=TrainWholeAlphaMatting.PATH_LOGS, histogram_freq=0, write_graph=True, write_images=True)
         model_name = TrainWholeAlphaMatting.PATH_MODEL_CHECKPOINTS + 'whole_alpha_matting.{epoch:02d}-val_loss-{val_loss:.4f}-val_sad-{val_sad:.4f}-val_mse-{val_mse:.4f}.hdf5'
-        # model_checkpoint = ModelCheckpoint(model_name, monitor='val_loss', verbose=1, save_best_only=True)
         model_checkpoint = AltModelCheckpoint(filepath=model_name, alternate_model=model,  monitor='val_loss', verbose=1, save_best_only=True)
 
         early_stop = EarlyStopping('val_loss', patience=6, verbose=1)
@@ -38,7 +37,6 @@ class TrainWholeAlphaMatting(TrainEncoderDecoder):
         return [tensor_board, model_checkpoint, early_stop, reduce_lr]
 
     def load_model(self):
-        # inputs, model = build_encoder_decoder_from_vgg()
         refinement = load_model(TrainWholeAlphaMatting.PATH_MODEL_CHECKPOINTS + self.model_name, custom_objects={"Unpooling": Unpooling()})
        
         

@@ -1,3 +1,6 @@
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import argparse
 from scripts.alpha_matting.predict_alpha_matte import AlphaMattePredictor
 from scripts.trimap_generation.predict_trimap import TrimapPredictor
@@ -5,17 +8,9 @@ from scripts.saliency.predict_saliency import SaliencyPredictor
 from workflow import Workflow
 import cv2 as cv
 import scipy.misc
-alpha_matte_predictor_path = "..\\..\\model_checkpoints\\encoder_decoder.07-val_loss-0.1294-val_sad-187.0877-val_mse-0.0446.hdf5"
 
 parser = argparse.ArgumentParser(
-    description='Script for training neural networks.')
-
-# parser.add_argument('--target',
-#                     dest='target',
-#                     choices=["alpha_matte", "saliency", "trimap"],
-#                     action='store',
-#                     required=True,
-#                     help="What to predict?")
+    description='Script for predicting with neural networks.')
 
 parser.add_argument('--output',
                     dest='output',
@@ -26,6 +21,7 @@ parser.add_argument('--output',
 
 parser.add_argument('--img',
                     dest='img',
+                    required=True,
                     action='store',
                     help="The input image for alpha matte, saliency, trimap generation")
 
@@ -74,36 +70,3 @@ else:
     workflow.set_sal(args.saliency)
     workflow.set_trimap(args.trimap)
     workflow.workflow(what_to_output)
-
-
-
-
-
-
-
-
-
-
-# if args.target == "alpha_matte":
-#     if args.img is None or args.trimap is None:
-#         parser.print_help()
-#         parser.exit()
-#     predictor = AlphaMattePredictor(alpha_matte_predictor_path)
-#     predictor.load_model()
-#     prediction = predictor.predict_patches(args.img, args.trimap)
-#     scipy.misc.imsave('../../output/alpha.png', prediction)
-#     # cv.imwrite("alpha.png", prediction)
-# elif args.target == "saliency":
-#     predictor = SaliencyPredictor("../../model_checkpoints/saliency.34-val_loss-0.9297.hdf5")
-#     predictor.load_model()
-#     pred = predictor.predict_path(args.img)
-#     scipy.misc.imsave('../../output/sal.png', pred)
-
-# elif args.target == "trimap":
-#     if args.img is None or args.saliency is None:
-#         parser.print_help()
-#         parser.exit()
-#     predictor = TrimapPredictor()
-#     prediction = predictor.predict(args.img, args.saliency)
-#     scipy.misc.imsave('../../output/trimap.png', prediction)
-

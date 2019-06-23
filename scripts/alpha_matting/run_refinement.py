@@ -38,7 +38,6 @@ class TrainRefinement(TrainEncoderDecoder):
         return [tensor_board, model_checkpoint, early_stop, reduce_lr]
     
     def load_model(self):
-        # inputs, model = build_encoder_decoder_from_vgg()
         encoder_decoder = load_model(TrainRefinement.PATH_MODEL_CHECKPOINTS + self.model_name, custom_objects={"Unpooling": Unpooling()})
         self._make_encoder_decoder_untrainable(encoder_decoder)
        

@@ -17,7 +17,7 @@ from keras.optimizers import Adam
 from scripts.alpha_matting.run_encoder_decoder_arch import TrainEncoderDecoder
 import os
 import cv2 as cv
-from patches import get_all_patches, combine_patches
+from patches import get_all_patches, combine_patches, get_crops_by_squares, combine_predictions, patches_of_culture
 from trimap import get_final_output
 import numpy as np
 
@@ -45,6 +45,23 @@ class AlphaMattePredictor:
         trimap = cv.imread(path_to_trimap)
         return self.predict_patches_img(img, trimap)
 
+    def predict_patches_intelligent_img(self, img, trimap):
+        squares = patches_of_culture(img, trimap[:, :, 0])
+        patches = get_crops_by_squares(img, trimap[:, :, 0:1], squares)
+
+        predictions = []
+        for patch in patches:
+            predictions.append(self.model.predict((patch.reshape(1, 320, 320, 4))).reshape(320, 320, 1))
+        output = combine_predictions(predictions, squares, img.shape)
+        print(output.shape)
+        return get_final_output(output.reshape(img.shape[0], img.shape[1]), trimap[:, :, 0] / 255)
+
+    
+    def predict_patches_intelligent_path(self, path_to_img, path_to_trimap):
+        img = cv.imread(path_to_img)
+        trimap = cv.imread(path_to_trimap)
+        return self.predict_patches_intelligent_img(img, trimap)
+
     def predict_resized_img(self, img, trimap):
         original_shape = img.shape
         img_resized = cv.resize(img, (320, 320))
@@ -54,7 +71,7 @@ class AlphaMattePredictor:
         input_for_model[:, :, 0:3] = img_resized
         input_for_model[:, :, 3] = trimap_resized
 
-        prediction = self.model.predict(input_for_model)
+        prediction = self.model.predict(input_for_model.reshape(1, 320, 320, 4))
         
         return cv.resize(prediction[0], (original_shape[1], original_shape[0]))
 
