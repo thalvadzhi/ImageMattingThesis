@@ -2,7 +2,10 @@ alt_model_checkpoint
 tensorflow-gpu
 keras
 numpy
-scipy
+pillow
+scipy==1.0.0
 matplotlib
 tensorboard
 jupyter
+scikit-image
+scikit-learn

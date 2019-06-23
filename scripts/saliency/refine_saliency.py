@@ -3,7 +3,6 @@ from skimage.segmentation import mark_boundaries
 import sys
 sys.path.insert(0, "../trimap_generation/")
 sys.path.insert(0, "../")
-from scripts.trimap_generation.saliency import get_saliency_fine_grained
 import cv2 as cv
 from matplotlib.pyplot import imshow
 import numpy as np
